@@ -9,8 +9,7 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: rgba(3, 22, 26, 0.55);
-  backdrop-filter: blur(10px);
+  background: rgb(3, 22, 26);
   cursor: pointer;
   transition: border-color 0.2s ease;
 }
@@ -72,8 +71,7 @@
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(3, 22, 26, 0.82);
-  backdrop-filter: blur(16px);
+  background: rgba(3, 22, 26, 0.97);
   transform-origin: top right;
   opacity: 0;
   transform: translateY(-8px) scaleY(0.96);

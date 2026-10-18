@@ -5,10 +5,20 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 // Renderer, scene, camera and lighting shared by every molecule viewer,
 // so all models on the site are lit the same way. The rim light defaults to
-// a cool white; the hero passes red to match hemoglobin.
-export function createStage(container: HTMLElement, { rimColor = 0xdff4f6 } = {}) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// a cool white; the hero passes red to match hemoglobin. Viewers that only
+// draw on demand pass keepFrame so the last frame stays on screen.
+export function createStage(
+  container: HTMLElement,
+  { rimColor = 0xdff4f6, keepFrame = false } = {},
+) {
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: keepFrame,
+  });
+  // 1.5× is sharp enough for molecules and draws far fewer pixels than 2–3×
+  // on retina laptops and phones.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -39,6 +49,9 @@ export function createStage(container: HTMLElement, { rimColor = 0xdff4f6 } = {}
     envMap.dispose();
     pmrem.dispose();
     renderer.dispose();
+    // Release the WebGL context now rather than waiting for garbage
+    // collection; browsers only allow a handful at once.
+    renderer.forceContextLoss();
     renderer.domElement.remove();
   }
 

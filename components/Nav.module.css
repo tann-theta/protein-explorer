@@ -19,11 +19,6 @@
   letter-spacing: -0.01em;
 }
 
-/* The logo is white on black; screen blending drops the black box. */
-.logo {
-  mix-blend-mode: screen;
-}
-
 @media (max-width: 600px) {
   .nav {
     padding: 0 16px;

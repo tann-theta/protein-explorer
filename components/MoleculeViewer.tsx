@@ -13,8 +13,14 @@ type Props = {
   titleRef: RefObject<HTMLElement | null>;
 };
 
-const GROWTH = 1.6; // molecule size at the end of the scroll, relative to the start
-const MAX_BOX_WIDTH = 900; // px — keeps the molecule from getting huge on wide screens
+const MAX_BOX_WIDTH = 900; // px — keeps the starting molecule from getting huge on wide screens
+// At the end of the spin the molecule is sized to the screen: as wide as
+// FINAL_WIDTH of the screen or as tall as FINAL_HEIGHT of the area below the
+// header, whichever is smaller. Width limits phones, height limits laptops.
+const FINAL_WIDTH = 0.86;
+const FINAL_HEIGHT = 0.72;
+const MAX_START_RATIO = 0.8; // the starting size is at most this much of the final size
+const EASE = 0.14; // how quickly the spin catches up with the scroll position (per frame)
 const CAMERA_Z = 3;
 
 // Soft radial gradient used for the glow behind the molecule.
@@ -42,7 +48,7 @@ export default function MoleculeViewer({ modelUrl, scrollTarget, titleRef }: Pro
     const container = containerRef.current;
     if (!container) return;
 
-    const stage = createStage(container, { rimColor: 0xff4a3a });
+    const stage = createStage(container, { rimColor: 0xff4a3a, keepFrame: true });
     const { renderer, scene, camera } = stage;
     camera.position.set(0, 0, CAMERA_Z);
 
@@ -64,16 +70,27 @@ export default function MoleculeViewer({ modelUrl, scrollTarget, titleRef }: Pro
     scene.add(halo);
 
     let modelRadius = 0.4;
+    // The model's half-width (widest over a full turn) and half-height, as
+    // fractions of its bounding-sphere radius. Used to size it to the screen.
+    let extentW = 0.83;
+    let extentH = 0.56;
     let disposed = false;
 
     // Layout in pixels, recomputed on resize.
-    const layout = { w: 1, h: 1, startRadius: 100, startY: 0.5, endY: 0.5 };
+    const layout = { w: 1, h: 1, startRadius: 100, endRadius: 160, startY: 0.5, endY: 0.5 };
 
     createLoader().load(modelUrl, (gltf) => {
       if (disposed) return;
       modelRadius = centreModel(gltf.scene);
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      const half = (lo: number, hi: number) => Math.max(Math.abs(lo), Math.abs(hi));
+      extentW = Math.hypot(half(box.min.x, box.max.x), half(box.min.z, box.max.z)) / modelRadius;
+      extentH = half(box.min.y, box.max.y) / modelRadius;
       spinner.add(gltf.scene);
       resize();
+      // Keep drawing through the fade-in: a frame drawn while the canvas is
+      // still invisible can be dropped by the browser.
+      requestDraw(1800);
       setLoaded(true);
     });
 
@@ -94,11 +111,31 @@ export default function MoleculeViewer({ modelUrl, scrollTarget, titleRef }: Pro
       const boxH = h - top;
       const boxMin = Math.min(Math.min(w, MAX_BOX_WIDTH), boxH);
 
+      // Final size and position: centred in the area below the fixed header.
+      const navH =
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")) || 0;
+      const availH = h - navH;
+      const endRadius = Math.min(
+        (FINAL_WIDTH * w) / 2 / extentW,
+        (FINAL_HEIGHT * availH) / 2 / extentH,
+      );
+
       layout.w = w;
       layout.h = h;
-      layout.startRadius = (boxMin / 2) / 0.82;
+      layout.endRadius = endRadius;
+      layout.startRadius = Math.min(boxMin / 2 / 0.82, endRadius * MAX_START_RATIO);
       layout.startY = top + boxH / 2;
-      layout.endY = h / 2;
+      layout.endY = navH + availH / 2;
+
+      // Tell the page how much empty space is left under the molecule when
+      // the spin ends, so the first category can start just below it
+      // (used by .explore in app/page.module.css).
+      const finalBottom = layout.endY + endRadius * extentH;
+      document.documentElement.style.setProperty(
+        "--hero-tail",
+        `${Math.max(0, Math.round(h - finalBottom))}px`,
+      );
+      requestDraw();
     }
 
     function scrollProgress() {
@@ -116,14 +153,40 @@ export default function MoleculeViewer({ modelUrl, scrollTarget, titleRef }: Pro
     const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     let progress = scrollProgress();
     let frame = 0;
-    const tick = () => {
-      frame = requestAnimationFrame(tick);
+    let dirty = true;
+    let drawUntil = 0;
+
+    // Only draw when something changed. The loop runs while the molecule is
+    // still easing towards the scroll position, then stops until the next
+    // scroll or resize, so an idle page costs nothing.
+    function requestDraw(keepDrawingMs = 0) {
+      dirty = true;
+      drawUntil = Math.max(drawUntil, performance.now() + keepDrawingMs);
+      if (!frame) frame = requestAnimationFrame(tick);
+    }
+
+    function tick() {
+      frame = 0;
       // Ease toward the scroll position so wheel steps feel smooth.
-      progress += (scrollProgress() - progress) * 0.08;
+      const gap = scrollProgress() - progress;
+      if (Math.abs(gap) > 0.0002) {
+        progress += gap * EASE;
+        dirty = true;
+      } else if (gap !== 0) {
+        progress += gap;
+        dirty = true;
+      }
+      if (!dirty && performance.now() > drawUntil) return;
+      dirty = false;
+      draw();
+      frame = requestAnimationFrame(tick);
+    }
+
+    function draw() {
       const grow = THREE.MathUtils.smoothstep(progress, 0, 1);
 
       const worldPerPx = (2 * CAMERA_Z * tanHalfFov) / layout.h;
-      const radiusPx = layout.startRadius * THREE.MathUtils.lerp(1, GROWTH, grow);
+      const radiusPx = THREE.MathUtils.lerp(layout.startRadius, layout.endRadius, grow);
       const centreY = THREE.MathUtils.lerp(layout.startY, layout.endY, grow);
       const y = -(centreY - layout.h / 2) * worldPerPx;
       const radius = radiusPx * worldPerPx;
@@ -146,12 +209,19 @@ export default function MoleculeViewer({ modelUrl, scrollTarget, titleRef }: Pro
       halo.scale.setScalar(sizePx * worldPerPx);
 
       renderer.render(scene, camera);
+    }
+
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
     };
-    tick();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    requestDraw();
 
     return () => {
       disposed = true;
       cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      document.documentElement.style.removeProperty("--hero-tail");
       ro.disconnect();
       halo.material.dispose();
       haloTexture.dispose();

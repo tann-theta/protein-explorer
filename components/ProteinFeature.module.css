@@ -47,12 +47,11 @@
   color: var(--ink);
 }
 
-/* ---------- right: bordered media box ---------- */
+/* ---------- right: bordered 3D box ---------- */
 .media {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 14px;
   min-width: 0;
 }
 
@@ -78,8 +77,7 @@
   height: 34px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: rgba(3, 22, 26, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(3, 22, 26, 0.85);
   color: var(--ink);
   cursor: pointer;
   transition: background 0.15s ease;
@@ -94,15 +92,14 @@
   outline-offset: 2px;
 }
 
-/* Expanded: the media column (box + toggle) covers the page below the header. */
+/* Expanded: the box covers the page below the header. */
 .expanded {
   position: fixed;
   z-index: 10;
   inset: var(--nav-h) 0 0 0;
   align-items: center;
   padding: 24px;
-  background: rgba(1, 10, 18, 0.96);
-  backdrop-filter: blur(12px);
+  background: var(--background);
 }
 
 .expanded .box {
@@ -111,55 +108,13 @@
   aspect-ratio: auto;
 }
 
-/* Fills the box; wider videos are cropped at the sides. */
-.video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.expanded .video {
-  object-fit: contain;
-}
-
-.toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: rgba(3, 22, 26, 0.5);
-  color: var(--ink);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.toggle:hover {
-  background: rgba(217, 238, 240, 0.08);
-  border-color: rgba(217, 238, 240, 0.35);
-}
-
-.toggle:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
-}
-
 @media (max-width: 820px) {
   .feature {
     grid-template-columns: 1fr;
   }
 
-  /* On narrow screens the media sits above the text. */
+  /* On narrow screens the text comes first, then the 3D box. */
   .media {
-    order: -1;
     align-items: center;
   }
 

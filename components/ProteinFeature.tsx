@@ -12,10 +12,26 @@ function withItalics(text: string) {
   );
 }
 
+// How far outside the screen a box can be and still keep its 3D viewer.
+// About 2–3 viewers exist at once; the rest are torn down to save memory.
+const NEAR_MARGIN = "75% 0px";
+
 export default function ProteinFeature({ protein }: { protein: Protein }) {
-  const [show3d, setShow3d] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [near, setNear] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  // Create the 3D viewer only while the box is near the screen, and dispose
+  // of it (freeing its WebGL context) once it's far away again.
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const io = new IntersectionObserver(([entry]) => setNear(entry.isIntersecting), {
+      rootMargin: NEAR_MARGIN,
+    });
+    io.observe(box);
+    return () => io.disconnect();
+  }, []);
 
   // While expanded: Escape closes it, and the page behind doesn't scroll.
   useEffect(() => {
@@ -29,18 +45,6 @@ export default function ProteinFeature({ protein }: { protein: Protein }) {
     };
   }, [expanded]);
 
-  // Only play the video while it's on screen.
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) video.play().catch(() => {});
-      else video.pause();
-    });
-    io.observe(video);
-    return () => io.disconnect();
-  }, [show3d]);
-
   return (
     <article id={protein.slug} className={styles.feature}>
       <div className={styles.copy}>
@@ -52,7 +56,7 @@ export default function ProteinFeature({ protein }: { protein: Protein }) {
       </div>
 
       <div className={`${styles.media} ${expanded ? styles.expanded : ""}`}>
-        <div className={styles.box}>
+        <div ref={boxRef} className={styles.box}>
           <button
             type="button"
             className={styles.expand}
@@ -68,44 +72,14 @@ export default function ProteinFeature({ protein }: { protein: Protein }) {
               )}
             </svg>
           </button>
-          {show3d ? (
+          {(near || expanded) && (
             <ModelViewer
               modelUrl={protein.model}
               label={`Interactive 3D model of ${protein.name} (PDB ${protein.pdbId})`}
-            />
-          ) : (
-            <video
-              ref={videoRef}
-              className={styles.video}
-              src={protein.video}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label={`Animation of ${protein.name}`}
+              expanded={expanded}
             />
           )}
         </div>
-        <button
-          type="button"
-          className={styles.toggle}
-          onClick={() => setShow3d((v) => !v)}
-          aria-label={
-            show3d
-              ? `Back to the ${protein.name} video`
-              : `Explore ${protein.name} in 3D`
-          }
-        >
-          {show3d ? (
-            <>
-              <span aria-hidden="true">&larr;</span> Back to video
-            </>
-          ) : (
-            <>
-              Explore further <span aria-hidden="true">&rarr;</span>
-            </>
-          )}
-        </button>
       </div>
     </article>
   );

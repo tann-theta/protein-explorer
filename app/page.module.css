@@ -3,8 +3,9 @@
   z-index: 1;
   width: 100%;
   max-width: 1200px;
-  /* Pull the first category up into the empty space under the molecule,
-     so it rises into view as the hero spin finishes. */
-  margin: -18vh auto 0;
+  /* Pull the first category up into the empty space under the molecule
+     (--hero-tail, measured by the hero viewer), leaving a fixed gap, so it
+     rises into view as the spin finishes on any screen size. */
+  margin: calc(clamp(48px, 8vh, 80px) - var(--hero-tail, 18vh)) auto 0;
   padding: 0 clamp(20px, 6vw, 96px) clamp(80px, 14vh, 160px);
 }

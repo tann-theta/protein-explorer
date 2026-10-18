@@ -13,7 +13,6 @@ export default function Nav() {
           alt=""
           width={26}
           height={30}
-          className={styles.logo}
           priority
         />
         <span>Protein Explorer</span>

@@ -40,7 +40,7 @@ export default function Hero() {
         </div>
         <div className={styles.molecule}>
           <MoleculeViewer
-            modelUrl="/models/4HHB_hemoglobin.glb"
+            modelUrl="/models/hero-hemoglobin.glb"
             scrollTarget={sectionRef}
             titleRef={headingRef}
           />

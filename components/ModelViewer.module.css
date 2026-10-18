@@ -44,8 +44,7 @@
   border: 1px solid var(--line);
   border-radius: 4px;
   overflow: hidden;
-  background: rgba(3, 22, 26, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(3, 22, 26, 0.85);
 }
 
 .zoom button {
@@ -72,4 +71,43 @@
 .zoom button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: -2px;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+  pointer-events: none;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Show the mouse hint on laptops and the touch hint on phones/tablets. */
+.hintTouch {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .hintMouse {
+    display: none;
+  }
+
+  .hintTouch {
+    display: inline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading {
+    animation: none;
+  }
 }
