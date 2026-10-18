@@ -2,6 +2,7 @@ import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import SiteBackground from "@/components/SiteBackground";
 import CategorySection from "@/components/CategorySection";
+import Footer from "@/components/Footer";
 import { categories, proteins } from "@/lib/content";
 import styles from "./page.module.css";
 
@@ -23,6 +24,7 @@ export default function Home() {
           ))}
         </div>
       </main>
+      <Footer />
     </>
   );
 }
