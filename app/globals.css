@@ -1,0 +1,53 @@
+:root {
+  --background: #010a12;
+  --foreground: #f5f5f5;
+
+  /* Cool pale text and hairlines that sit on the aquamarine background */
+  --ink: #d9eef0;
+  --ink-dim: rgba(217, 238, 240, 0.62);
+  --line: rgba(217, 238, 240, 0.16);
+
+  /* Height of the fixed header; anchors and the hero leave room for it. */
+  --nav-h: 76px;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --nav-h: 68px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

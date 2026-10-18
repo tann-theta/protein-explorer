@@ -1,0 +1,58 @@
+.hero {
+  --progress: 0;
+  position: relative;
+  z-index: 1;
+  /* Scroll distance for one full rotation = height − 100vh. */
+  height: 300vh;
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.heading {
+  position: relative;
+  z-index: 1;
+  padding-top: calc(var(--nav-h) + clamp(4px, 1.5vh, 16px));
+  text-align: center;
+  /* Fades out over the first 40% of the scroll, drifting up slightly. */
+  opacity: clamp(0, calc(1 - var(--progress) / 0.4), 1);
+  transform: translateY(calc(min(var(--progress), 0.4) * -10vh));
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 18vw;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+.headline {
+  margin-top: clamp(10px, 1.6vh, 18px);
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 2.2vw, 1.9rem);
+  line-height: 1.2;
+}
+
+.subheadline {
+  max-width: 56ch;
+  margin: 8px auto 0;
+  padding-inline: 16px;
+  font-size: clamp(0.85rem, 1.1vw, 1rem);
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+/* The canvas covers the whole stage; the viewer positions the molecule
+   below the title and moves it to the centre as it grows. */
+.molecule {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+}
